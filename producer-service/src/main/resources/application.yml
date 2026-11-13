@@ -1,0 +1,42 @@
+server:
+  port: ${PRODUCER_PORT:8081}
+
+spring:
+  application:
+    name: producer-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:19092,localhost:29092,localhost:39092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: com.bank.txn.common.serde.TransactionEventSerializer
+      acks: all                       # leader + in-sync followers (min.insync.replicas=2)
+      compression-type: lz4
+      properties:
+        enable.idempotence: true      # no duplicates / no reordering on retry
+        max.in.flight.requests.per.connection: 5
+        linger.ms: 5
+        delivery.timeout.ms: 120000
+        request.timeout.ms: 15000
+
+generator-autostart: ${GENERATOR_AUTOSTART:true}
+
+generator:
+  rate-per-second: ${GENERATOR_RATE:50}
+  accounts: 5000
+  late-ratio: 0.03
+  max-lateness-seconds: 90
+  out-of-order-ratio: 0.02
+  duplicate-ratio: 0.01
+  high-value-ratio: 0.005
+  burst-chance-per-second: 0.05
+  burst-size: 12
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
